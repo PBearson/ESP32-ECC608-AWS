@@ -1,3 +1,0 @@
-[submodule "components/aws-iot-device-sdk-embedded-C"]
-	path = components/aws-iot-device-sdk-embedded-C
-	url = ./aws-iot-device-sdk-embedded-C
