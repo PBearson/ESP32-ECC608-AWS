@@ -87,10 +87,10 @@ set(COMPONENT_SRCS "mbedtls/library/aes.c"
                    "port/mbedtls_debug.c"
                    "port/net_sockets.c")
 
-set(COMPONENT_REQUIRES lwip)
+set(COMPONENT_REQUIRES lwip cryptoauthlib)
 
 register_component()
 
-target_compile_definitions(mbedtls PUBLIC
+target_compile_definitions(${COMPONENT_LIB} PUBLIC
     -DMBEDTLS_CONFIG_FILE="mbedtls/esp_config.h"
 )

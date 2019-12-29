@@ -10,7 +10,6 @@
 #include "freertos/event_groups.h"
 #include "esp_system.h"
 #include "esp_wifi.h"
-#include "esp_wpa2.h"
 #include "esp_event_loop.h"
 #include "esp_log.h"
 #include "esp_timer.h"
@@ -53,11 +52,6 @@ extern const uint8_t certificate_pem_crt_start[] asm("_binary_certificate_pem_cr
 extern const uint8_t certificate_pem_crt_end[] asm("_binary_certificate_pem_crt_end");
 extern const uint8_t private_pem_key_start[] asm("_binary_private_pem_key_start");
 extern const uint8_t private_pem_key_end[] asm("_binary_private_pem_key_end");
-
-
-// For wifi
-extern const uint8_t ca_pem_start[] asm("_binary_wpa2_ca_pem_start");
-extern const uint8_t ca_pem_end[] asm("_binary_wpa2_ca_pem_end");
 
 char HostAddress[255] = AWS_IOT_MQTT_HOST;
 
@@ -160,33 +154,7 @@ void aws_iot_task(void* params) {
 
 static void initialise_wifi(void)
 {
-	unsigned int ca_pem_bytes = ca_pem_end - ca_pem_start;
-	esp_wpa2_config_t config = WPA2_CONFIG_INIT_DEFAULT();
-	tcpip_adapter_init();
-	wifi_event_group = xEventGroupCreate();
-	ESP_ERROR_CHECK(esp_event_loop_init(event_handler, NULL));
-	wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
-	ESP_ERROR_CHECK(esp_wifi_init(&cfg));
-	ESP_ERROR_CHECK(esp_wifi_set_storage(WIFI_STORAGE_RAM));
-	wifi_config_t wifi_config = {
-		.sta = {
-			.ssid = EXAMPLE_WIFI_SSID,
-		},
-	};
-	ESP_LOGI(TAG, "Setting wifi cofig SSID %s...", wifi_config.sta.ssid);
-	ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
-	ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_STA, &wifi_config));
-	ESP_ERROR_CHECK(esp_wifi_sta_wpa2_ent_set_ca_cert(ca_pem_start, ca_pem_bytes));
-	ESP_ERROR_CHECK(esp_wifi_sta_wpa2_ent_set_identity((uint8_t*)EXAMPLE_EAP_ID, strlen(EXAMPLE_EAP_ID)));
-	if(EXAMPLE_EAP_METHOD == EAP_PEAP)
-	{
-		size_t username_len = strlen(EXAMPLE_EAP_USERNAME);
-		size_t password_len = strlen(EXAMPLE_EAP_PASSWORD);
-		ESP_ERROR_CHECK(esp_wifi_sta_wpa2_ent_set_username((uint8_t*)EXAMPLE_EAP_USERNAME, username_len));
-		ESP_ERROR_CHECK(esp_wifi_sta_wpa2_ent_set_password((uint8_t*)EXAMPLE_EAP_PASSWORD, password_len));
-	}
-	ESP_ERROR_CHECK(esp_wifi_sta_wpa2_ent_enable(&config));
-	ESP_ERROR_CHECK(esp_wifi_start());
+	printf("TODO...\n");
 }
 
 

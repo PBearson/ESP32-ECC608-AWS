@@ -1,5 +1,3 @@
-EXTRA_COMPONENT_DIRS := cryptoauthlib cryptoauthlib_hal cryptoauthlib_basic cryptoauthlib_atcacert cryptoauthlib_mbedtls
-
 #
 # Main Makefile. This is basically the same as a component makefile.
 #
@@ -7,7 +5,7 @@ EXTRA_COMPONENT_DIRS := cryptoauthlib cryptoauthlib_hal cryptoauthlib_basic cryp
 ifdef CONFIG_EXAMPLE_EMBEDDED_CERTS
 # Certificate files. certificate.pem.crt & private.pem.key must be downloaded
 # from AWS, see README for details.
-COMPONENT_EMBED_TXTFILES := certs/aws-root-ca.pem certs/certificate.pem.crt certs/wpa2_ca.pem certs/private.pem.key
+COMPONENT_EMBED_TXTFILES := certs/aws-root-ca.pem certs/certificate.pem.crt certs/private.pem.key
 
 # Print an error if the certificate/key files are missing
 $(COMPONENT_PATH)/certs/certificate.pem.crt $(COMPONENT_PATH)/certs/private.pem.key:

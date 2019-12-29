@@ -27,16 +27,14 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <sys/param.h>
-#include "mbedtls/bignum.h"
-#include "rom/bigint.h"
-#include "soc/hwcrypto_reg.h"
+#include "esp32/rom/bigint.h"
+#include "soc/hwcrypto_periph.h"
 #include "esp_system.h"
 #include "esp_log.h"
-#include "esp_intr.h"
 #include "esp_intr_alloc.h"
 #include "esp_attr.h"
 
-#include "soc/dport_reg.h"
+#include <mbedtls/bignum.h>
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
@@ -361,6 +359,18 @@ int mbedtls_mpi_exp_mod( mbedtls_mpi* Z, const mbedtls_mpi* X, const mbedtls_mpi
     mbedtls_mpi *Rinv;    /* points to _Rinv (if not NULL) othwerwise &RR_new */
     mbedtls_mpi_uint Mprime;
 
+    if (mbedtls_mpi_cmp_int(M, 0) <= 0 || (M->p[0] & 1) == 0) {
+        return MBEDTLS_ERR_MPI_BAD_INPUT_DATA;
+    }
+
+    if (mbedtls_mpi_cmp_int(Y, 0) < 0) {
+        return MBEDTLS_ERR_MPI_BAD_INPUT_DATA;
+    }
+
+    if (mbedtls_mpi_cmp_int(Y, 0) == 0) {
+        return mbedtls_mpi_lset(Z, 1);
+    }
+
     if (hw_words * 32 > 4096) {
         return MBEDTLS_ERR_MPI_NOT_ACCEPTABLE;
     }
@@ -394,12 +404,23 @@ int mbedtls_mpi_exp_mod( mbedtls_mpi* Z, const mbedtls_mpi* X, const mbedtls_mpi
     start_op(RSA_START_MODEXP_REG);
 
     /* X ^ Y may actually be shorter than M, but unlikely when used for crypto */
-    MBEDTLS_MPI_CHK( mbedtls_mpi_grow(Z, m_words) );
+    if ((ret = mbedtls_mpi_grow(Z, m_words)) != 0) {
+        esp_mpi_release_hardware();
+        goto cleanup;
+    }
 
     wait_op_complete(RSA_START_MODEXP_REG);
 
     mem_block_to_mpi(Z, RSA_MEM_Z_BLOCK_BASE, m_words);
     esp_mpi_release_hardware();
+
+    // Compensate for negative X
+    if (X->s == -1 && (Y->p[0] & 1) != 0) {
+        Z->s = -1;
+        MBEDTLS_MPI_CHK(mbedtls_mpi_add_mpi(Z, M, Z));
+    } else {
+        Z->s = 1;
+    }
 
  cleanup:
     if (_Rinv == NULL) {
