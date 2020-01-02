@@ -1,31 +1,14 @@
-menu "Example Configuration"
+menu "Project Configuration"
 
 config WIFI_SSID
     string "WiFi SSID"
     default "myssid"
     help
-        SSID (network name) for the example to connect to.
+        SSID (network name) for the ESP32 to connect to.
 
-config EAP_METHOD
-	int "EAP METHOD"
-	default 1
-
-config EAP_ID
-	string "EAP ID"
-	default "example"
-	
-config EAP_USERNAME
-	string "EAP USERNAME"
-	default "example"
-
-
-config EAP_PASSWORD
+config WIFI_PASSWORD
     string "WiFi Password"
     default "mypassword"
-    help
-        WiFi password (WPA or WPA2) for the example to use.
-
-        Can be left blank if the network has no security set.
 
 config AWS_EXAMPLE_CLIENT_ID
     string "AWS IoT Client ID"

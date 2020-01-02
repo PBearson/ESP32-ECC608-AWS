@@ -85,7 +85,9 @@ set(COMPONENT_SRCS "mbedtls/library/aes.c"
                    "port/esp_sha256.c"
                    "port/esp_sha512.c"
                    "port/mbedtls_debug.c"
-                   "port/net_sockets.c")
+                   "port/net_sockets.c"
+		   "port/esp32/aes.c"
+		   "port/esp32/sha.c")
 
 set(COMPONENT_REQUIRES lwip cryptoauthlib)
 

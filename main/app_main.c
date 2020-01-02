@@ -28,12 +28,6 @@
 #include "aws_iot_version.h"
 #include "aws_iot_mqtt_client_interface.h"
 
-#define EXAMPLE_WIFI_SSID CONFIG_WIFI_SSID
-#define EXAMPLE_EAP_METHOD CONFIG_EAP_METHOD 
-#define EXAMPLE_EAP_ID CONFIG_EAP_ID
-#define EXAMPLE_EAP_USERNAME CONFIG_EAP_USERNAME
-#define EXAMPLE_EAP_PASSWORD CONFIG_EAP_PASSWORD
-
 /* FreeRTOS event group to signal when we are connected & ready to make a request */
 static EventGroupHandle_t wifi_event_group;
 
@@ -41,8 +35,6 @@ static EventGroupHandle_t wifi_event_group;
    but we only care about one event - are we connected
    to the AP with an IP? */
 const int CONNECTED_BIT = BIT0;
-
-#define EAP_PEAP 1
 
 static const char* TAG = "subpub";
 
@@ -58,9 +50,9 @@ char HostAddress[255] = AWS_IOT_MQTT_HOST;
 uint32_t port = AWS_IOT_MQTT_PORT;
 
 
-static esp_err_t event_handler(void *ctx, system_event_t *event)
+static void event_handler(void *arg, esp_event_base_t event_base, int32_t event_id, void* event_data)
 {
-    switch(event->event_id) {
+    switch(event_id) {
     case SYSTEM_EVENT_STA_START:
         esp_wifi_connect();
         break;
@@ -68,15 +60,12 @@ static esp_err_t event_handler(void *ctx, system_event_t *event)
         xEventGroupSetBits(wifi_event_group, CONNECTED_BIT);
         break;
     case SYSTEM_EVENT_STA_DISCONNECTED:
-        /* This is a workaround as ESP32 WiFi libs don't currently
-           auto-reassociate. */
         esp_wifi_connect();
         xEventGroupClearBits(wifi_event_group, CONNECTED_BIT);
         break;
     default:
         break;
     }
-    return ESP_OK;
 }
 
 //void aws_iot_task(void *param) {
@@ -154,7 +143,29 @@ void aws_iot_task(void* params) {
 
 static void initialise_wifi(void)
 {
-	printf("TODO...\n");
+	wifi_event_group = xEventGroupCreate();
+
+	tcpip_adapter_init();
+
+	ESP_ERROR_CHECK(esp_event_loop_create_default());
+
+	wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
+	ESP_ERROR_CHECK(esp_wifi_init(&cfg));
+	ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &event_handler, NULL));
+	ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &event_handler, NULL));
+
+	wifi_config_t wifi_config = {
+		.sta = {
+			.ssid = CONFIG_WIFI_SSID,
+			.password = CONFIG_WIFI_PASSWORD
+		},
+	};
+
+	ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
+	ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_STA, &wifi_config));
+	ESP_ERROR_CHECK(esp_wifi_start());
+
+	ESP_LOGI(TAG, "wifi_init_sta finished.");
 }
 
 
@@ -170,6 +181,5 @@ void app_main()
     printf("Hello\n");
 
     initialise_wifi();
-    //aws_iot_task();
     xTaskCreate(&aws_iot_task, "aws_iot_task", 9216, NULL, tskIDLE_PRIORITY, NULL);
 }
