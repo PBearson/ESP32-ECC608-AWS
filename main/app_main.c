@@ -48,24 +48,30 @@ extern const uint8_t private_pem_key_end[] asm("_binary_private_pem_key_end");
 char HostAddress[255] = AWS_IOT_MQTT_HOST;
 
 uint32_t port = AWS_IOT_MQTT_PORT;
-
+static int s_retry_num = 0;
+#define S_RETRY_MAX 5
 
 static void event_handler(void *arg, esp_event_base_t event_base, int32_t event_id, void* event_data)
 {
-    switch(event_id) {
-    case SYSTEM_EVENT_STA_START:
-        esp_wifi_connect();
-        break;
-    case SYSTEM_EVENT_STA_GOT_IP:
-        xEventGroupSetBits(wifi_event_group, CONNECTED_BIT);
-        break;
-    case SYSTEM_EVENT_STA_DISCONNECTED:
-        esp_wifi_connect();
-        xEventGroupClearBits(wifi_event_group, CONNECTED_BIT);
-        break;
-    default:
-        break;
-    }
+	if(event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_START)
+	{
+		esp_wifi_connect();
+	}
+	else if(event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_DISCONNECTED)
+	{
+		if(s_retry_num < S_RETRY_MAX)
+		{
+			esp_wifi_connect();
+			xEventGroupClearBits(wifi_event_group, CONNECTED_BIT);
+			s_retry_num++;
+		}
+	}
+	else if(event_base == IP_EVENT && event_id == IP_EVENT_STA_GOT_IP)
+	{
+		ip_event_got_ip_t* event = (ip_event_got_ip_t*) event_data;
+		s_retry_num = 0;
+		xEventGroupSetBits(wifi_event_group, CONNECTED_BIT);
+	}
 }
 
 //void aws_iot_task(void *param) {
@@ -74,6 +80,7 @@ void aws_iot_task(void* params) {
     xEventGroupWaitBits(wifi_event_group, CONNECTED_BIT, false, true, portMAX_DELAY);
 
 	// Connect to cryptochip
+	printf("Connecting to cryptochip...\n");
 	ATCAIfaceCfg cfg = atca_cfg_init();
 	i2c_init();
 	check_ret(atcab_init(&cfg));
@@ -178,7 +185,6 @@ void app_main()
         err = nvs_flash_init();
     }
     ESP_ERROR_CHECK( err );
-    printf("Hello\n");
 
     initialise_wifi();
     xTaskCreate(&aws_iot_task, "aws_iot_task", 9216, NULL, tskIDLE_PRIORITY, NULL);

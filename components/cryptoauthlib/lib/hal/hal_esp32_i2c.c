@@ -66,7 +66,6 @@ void hal_i2c_change_baud(ATCAIface iface, uint32_t speed)
 
 ATCA_STATUS hal_i2c_init(void *hal, ATCAIfaceCfg *cfg)
 {
-    esp_err_t rc;
     int bus = cfg->atcai2c.bus;
     ATCAHAL_t *phal = (ATCAHAL_t*)hal;
 
@@ -104,9 +103,9 @@ ATCA_STATUS hal_i2c_init(void *hal, ATCAIfaceCfg *cfg)
             conf.scl_pullup_en = GPIO_PULLUP_DISABLE;
             conf.master.clk_speed = 100000; //cfg->atcai2c.baud;
 //            ESP_LOGI(TAG, "Configuring I2C");
-            rc = i2c_param_config(i2c_hal_data[bus]->id, &conf);
+            i2c_param_config(i2c_hal_data[bus]->id, &conf);
 //            ESP_LOGD(TAG, "I2C Param Config: %s", esp_err_to_name(rc));
-            rc = i2c_driver_install(i2c_hal_data[bus]->id, I2C_MODE_MASTER, 0, 0, 0);
+            i2c_driver_install(i2c_hal_data[bus]->id, I2C_MODE_MASTER, 0, 0, 0);
 //            ESP_LOGD(TAG, "I2C Driver Install; %s", esp_err_to_name(rc));
             i2c_hal_data[bus]->bus_index = bus;
         }
@@ -161,8 +160,6 @@ ATCA_STATUS hal_i2c_receive(ATCAIface iface, uint8_t *rxdata, uint16_t *rxlength
     ATCAIfaceCfg *cfg = iface->mIfaceCFG;
     esp_err_t rc;
     i2c_cmd_handle_t cmd;
-    int high = 0;
-    int low = 0;
 
     cmd = i2c_cmd_link_create();
     (void)i2c_master_start(cmd);
