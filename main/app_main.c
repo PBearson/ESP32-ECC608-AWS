@@ -68,7 +68,6 @@ static void event_handler(void *arg, esp_event_base_t event_base, int32_t event_
 	}
 	else if(event_base == IP_EVENT && event_id == IP_EVENT_STA_GOT_IP)
 	{
-		ip_event_got_ip_t* event = (ip_event_got_ip_t*) event_data;
 		s_retry_num = 0;
 		xEventGroupSetBits(wifi_event_group, CONNECTED_BIT);
 	}
@@ -124,9 +123,11 @@ void aws_iot_task(void* params) {
 
     ESP_LOGI(TAG, "Connecting to AWS...");
 
+    long long time1, time2, dt;
     while(true){
 	 
     	do {
+		time1 = esp_timer_get_time();
 	        rc = aws_iot_mqtt_connect(&client, &connectParams);
 	        if(SUCCESS != rc) {
 	            ESP_LOGE(TAG, "Error(%d) connecting to %s:%d", rc, mqttInitParams.pHostURL, mqttInitParams.port);
@@ -134,14 +135,18 @@ void aws_iot_task(void* params) {
         	}
 	    } while(SUCCESS != rc);
 
+
+	    time2 = esp_timer_get_time();
+	    dt = time2 - time1;
 	    printf("You have successfully connected to EC2!\n");
+	    printf("Time to connect: %lld microseconds\n", dt);
 	    rc = aws_iot_mqtt_disconnect(&client);
 	    if(rc != SUCCESS)
 	    {
 		printf("Tried to disconnect but there was a problem.\n");
 		break;
 	    }
-	     vTaskDelay(1000 / portTICK_RATE_MS);
+	     while(true) vTaskDelay(1000 / portTICK_RATE_MS); // Infinite loop
     }
 
 
