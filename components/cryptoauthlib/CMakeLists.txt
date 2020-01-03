@@ -16,6 +16,7 @@ set(
 	"lib/basic/atca_basic_random.c"
 	"lib/basic/atca_basic_read.c"
 	"lib/basic/atca_basic_genkey.c"
+	"lib/basic/atca_basic_ecdh.c"
 	
 	"lib/hal/atca_hal.c"
 	"lib/hal/hal_esp32_i2c.c"
