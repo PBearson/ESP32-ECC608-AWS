@@ -397,6 +397,18 @@ int mbedtls_ecdsa_sign( mbedtls_ecp_group *grp, mbedtls_mpi *r, mbedtls_mpi *s,
     return( ecdsa_sign_restartable( grp, r, s, d, buf, blen,
                                     f_rng, p_rng, NULL ) );
 }
+#else
+int mbedtls_ecdsa_sign(mbedtls_ecp_group *grp, mbedtls_mpi *r, mbedtls_mpi *s,
+		const mbedtls_mpi *d, const unsigned char *buf, size_t blen,
+		int (*f_rng)(void *, unsigned char *, size_t), void *p_rng)
+{
+	uint8_t signature[64];
+	if (0 != atcab_sign(0, buf, signature)) return -1;
+
+	mbedtls_mpi_read_binary(r, signature, 32);
+	mbedtls_mpi_read_binary(s, signature + 32, 32);
+	return 0;
+}
 #endif /* !MBEDTLS_ECDSA_SIGN_ALT */
 
 #if defined(MBEDTLS_ECDSA_DETERMINISTIC)
@@ -609,6 +621,27 @@ int mbedtls_ecdsa_verify( mbedtls_ecp_group *grp,
     ECDSA_VALIDATE_RET( buf != NULL || blen == 0 );
 
     return( ecdsa_verify_restartable( grp, buf, blen, Q, r, s, NULL ) );
+}
+#else
+int mbedtls_ecdsa_verify( mbedtls_ecp_group *grp,
+                          const unsigned char *buf, size_t blen,
+                          const mbedtls_ecp_point *Q,
+                          const mbedtls_mpi *r,
+                          const mbedtls_mpi *s)
+{
+	uint8_t pubkey[64];
+	char signature[64];
+	bool verified;
+	size_t siglen1, siglen2;
+	int ret;
+
+	atcab_get_pubkey(0, pubkey);
+
+	mbedtls_mpi_write_string(r, 16, signature, 32, &siglen1);
+	mbedtls_mpi_write_string(s, 16, signature, 32 + 32, &siglen2);
+
+	ret = atcab_verify_extern((uint8_t*)buf, (uint8_t*)signature, pubkey, &verified);
+	return ret;
 }
 #endif /* !MBEDTLS_ECDSA_VERIFY_ALT */
 
