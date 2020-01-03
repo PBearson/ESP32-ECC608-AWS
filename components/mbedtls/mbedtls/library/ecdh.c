@@ -39,6 +39,8 @@
 
 #include <string.h>
 
+#include "cryptoauthlib.h"
+
 /* Parameter validation macros based on platform_util.h */
 #define ECDH_VALIDATE_RET( cond )    \
     MBEDTLS_INTERNAL_VALIDATE_RET( cond, MBEDTLS_ERR_ECP_BAD_INPUT_DATA )
@@ -101,6 +103,23 @@ int mbedtls_ecdh_gen_public( mbedtls_ecp_group *grp, mbedtls_mpi *d, mbedtls_ecp
     ECDH_VALIDATE_RET( f_rng != NULL );
     return( ecdh_gen_public_restartable( grp, d, Q, f_rng, p_rng, NULL ) );
 }
+#else
+int mbedtls_ecdh_gen_public( mbedtls_ecp_group *grp, mbedtls_mpi *d, mbedtls_ecp_point *Q,
+                     int (*f_rng)(void *, unsigned char *, size_t),
+                     void *p_rng )
+{
+	uint8_t pubkey[ATCA_PUB_KEY_SIZE];
+	uint8_t temp = 1;
+
+	mbedtls_mpi_lset(d, ATCA_TEMPKEY_KEYID);
+	atcab_genkey(ATCA_TEMPKEY_KEYID, pubkey);
+	mbedtls_mpi_read_binary(&(Q->X), pubkey, ATCA_PUB_KEY_SIZE / 2);
+	mbedtls_mpi_read_binary(&(Q->Y), &pubkey[ATCA_PUB_KEY_SIZE / 2], ATCA_PUB_KEY_SIZE / 2);
+	mbedtls_mpi_read_binary(&(Q->Z), &temp, 1);
+
+	return 0;
+}
+
 #endif /* !MBEDTLS_ECDH_GEN_PUBLIC_ALT */
 
 #if !defined(MBEDTLS_ECDH_COMPUTE_SHARED_ALT)
@@ -151,6 +170,26 @@ int mbedtls_ecdh_compute_shared( mbedtls_ecp_group *grp, mbedtls_mpi *z,
     return( ecdh_compute_shared_restartable( grp, z, Q, d,
                                              f_rng, p_rng, NULL ) );
 }
+#else
+int mbedtls_ecdh_compute_shared( mbedtls_ecp_group *grp, mbedtls_mpi *z,
+                         const mbedtls_ecp_point *Q, const mbedtls_mpi *d,
+                         int (*f_rng)(void *, unsigned char *, size_t),
+                         void *p_rng )
+{
+	uint8_t pubkey[ATCA_PUB_KEY_SIZE];
+	uint8_t shared_key[ATCA_KEY_SIZE];
+
+	mbedtls_mpi *x = (mbedtls_mpi*)(&(Q->X));
+	mbedtls_mpi *y = (mbedtls_mpi*)(&(Q->Y));
+
+	mbedtls_mpi_write_binary(x, pubkey, ATCA_PUB_KEY_SIZE / 2);
+	mbedtls_mpi_write_binary(y, &pubkey[ATCA_PUB_KEY_SIZE / 2], ATCA_PUB_KEY_SIZE / 2);
+	atcab_ecdh_tempkey(pubkey, shared_key);
+	mbedtls_mpi_read_binary(z, shared_key, ATCA_KEY_SIZE);
+
+	return 0;
+}
+
 #endif /* !MBEDTLS_ECDH_COMPUTE_SHARED_ALT */
 
 static void ecdh_init_internal( mbedtls_ecdh_context_mbed *ctx )
