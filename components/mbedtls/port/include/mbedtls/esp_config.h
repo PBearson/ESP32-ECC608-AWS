@@ -30,6 +30,12 @@
 #include "sdkconfig.h"
 #include "mbedtls/config.h"
 
+// Uncomment these if using the ECC508/ECC608
+#define MBEDTLS_ECDSA_SIGN_ALT
+#define MBEDTLS_ECDSA_VERIFY_ALT
+#define MBEDTLS_ECDH_GEN_PUBLIC_ALT
+#define MBEDTLS_ECDH_COMPUTE_SHARED_ALT
+
 /**
  * \name SECTION: System support
  *
