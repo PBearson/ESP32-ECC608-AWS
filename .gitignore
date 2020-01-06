@@ -2,3 +2,6 @@ build
 sdkconfig
 sdkconfig.old
 main/certs/*
+keys
+secure_build.sh
+secure_build_help.txt
