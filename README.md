@@ -1,5 +1,7 @@
 # ESP32 ECC608 EC2
 
+**Deprecation Warning: This project is no longer maintained and may not worked with newer versions of ESP-IDF. Please use [esp-aws-iot](https://github.com/PBearson/esp-aws-iot) instead.
+
 ### Author: Bryan Pearson
 
 Use this repository to build a MQTT/TLS connection between your ESP32 and a remote AWS server while using an ECC608 for hardware-enforced security and crypto acceleration! The ECC608 is a security coprocessor by Microchip and contains tamper-proof key storage of up to 16 keys, hardware acceleration of ECC, AES, RNG, and many other features. In this project, the lightweight "mbedtls" crypto library has been modified to offload functions to the ECC608 where possible. This results in faster authentication with a remote server (between 3 and 8 times faster on average) and better security for your chip, since malware cannot compromise the security key.
