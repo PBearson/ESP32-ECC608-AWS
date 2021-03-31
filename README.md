@@ -1,6 +1,6 @@
 # ESP32 ECC608 EC2
 
-**Deprecation Warning: This project is no longer maintained and may not worked with newer versions of ESP-IDF. Please use [esp-aws-iot](https://github.com/PBearson/esp-aws-iot) instead.
+**Deprecation Warning: This project is no longer maintained and may not worked with newer versions of ESP-IDF. Please use [esp-aws-iot](https://github.com/PBearson/esp-aws-iot) instead.**
 
 ### Author: Bryan Pearson
 
